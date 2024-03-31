@@ -1,0 +1,22 @@
+services:
+  db:
+    container_name: employment-platform-db
+    image: mysql:latest
+    volumes:
+      - employment-platform-vol:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: 123123
+      MYSQL_DATABASE: employment-platform
+  pma:
+    container_name: employment-platform-pma
+    image: phpmyadmin:latest
+    restart: always
+    ports:
+      - 8080:80
+    environment:
+      - PMA_ARBITRARY=1
+volumes:
+  employment-platform-vol:
