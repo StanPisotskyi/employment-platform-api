@@ -12,7 +12,7 @@ from rest_framework.permissions import IsAuthenticated
 @permission_classes([IsAuthenticated])
 def create(request):
     data = JSONParser().parse(request)
-    serializer = CompanySerializer(data=data)
+    serializer = CompanySerializer(data=data, context={'request': request})
     serializer.is_valid(raise_exception=True)
     serializer.save()
 
