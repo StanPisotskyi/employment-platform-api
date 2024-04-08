@@ -5,6 +5,7 @@ from .serializers import CompanySerializer
 from rest_framework.parsers import JSONParser
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from .models import Company
 
 
 @api_view(['POST'])
@@ -17,3 +18,27 @@ def create(request):
     serializer.save()
 
     return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@api_view(['GET'])
+@renderer_classes([JSONRenderer])
+@permission_classes([IsAuthenticated])
+def get_one_by_id(request, id):
+    company = Company.objects.get(pk=id)
+    serializer = CompanySerializer(company)
+
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@renderer_classes([JSONRenderer])
+@permission_classes([IsAuthenticated])
+def get_list_by_search(request, search):
+    try:
+        companies = Company.objects.filter(title__istartswith=search).order_by('title')
+    except Company.DoesNotExist:
+        companies = None
+
+    serializer = CompanySerializer(companies, many=True)
+
+    return Response(serializer.data, status=status.HTTP_200_OK)
