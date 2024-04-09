@@ -6,6 +6,7 @@ from rest_framework.parsers import JSONParser
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from .models import Company
+from .permissions import IsCompanyUser
 
 
 @api_view(['POST'])
@@ -42,3 +43,10 @@ def get_list_by_search(request, search):
     serializer = CompanySerializer(companies, many=True)
 
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@renderer_classes([JSONRenderer])
+@permission_classes([IsCompanyUser])
+def add_company_user(request):
+    return Response({'status': True}, status=status.HTTP_201_CREATED)

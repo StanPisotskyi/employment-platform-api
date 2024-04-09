@@ -5,6 +5,7 @@ import validators
 import re
 
 STATUS_OWNER = 'owner'
+STATUS_EMPLOYEE = 'employee'
 
 
 class CompanyManager(models.Manager):
