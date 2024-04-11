@@ -11,9 +11,9 @@ class IsCompanyUser(permissions.BasePermission):
         body = json.loads(body_unicode)
         company_user = None
 
-        if request.user and 'firm_id' in body:
+        if request.user and 'company_id' in body:
             try:
-                company_user = CompanyUser.objects.get(company=body['firm_id'], user=request.user)
+                company_user = CompanyUser.objects.get(company=body['company_id'], user=request.user)
             except ObjectDoesNotExist:
                 company_user = None
 

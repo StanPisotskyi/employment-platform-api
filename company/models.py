@@ -3,6 +3,7 @@ from api_auth.models import User
 from django.db.models import Q
 import validators
 import re
+from django.core.exceptions import ObjectDoesNotExist
 
 STATUS_OWNER = 'owner'
 STATUS_EMPLOYEE = 'employee'
@@ -38,6 +39,70 @@ class CompanyManager(models.Manager):
         return company
 
 
+class CompanyUserManager(models.Manager):
+    def add_company_user(self, company_id, user_id):
+
+        try:
+            user = User.objects.get(pk=user_id)
+        except ObjectDoesNotExist:
+            user = None
+
+        if not isinstance(user, User):
+            raise TypeError('User is not found.')
+
+        try:
+            company = Company.objects.get(pk=company_id)
+        except ObjectDoesNotExist:
+            company = None
+
+        if not isinstance(company, Company):
+            raise TypeError('Company is not found.')
+
+        try:
+            existed_company_user = CompanyUser.objects.get(company=company, user=user)
+        except ObjectDoesNotExist:
+            existed_company_user = None
+
+        if isinstance(existed_company_user, CompanyUser):
+            raise TypeError('User is already assigned to this company.')
+
+        company_user = CompanyUser(company=company, user=user, status=STATUS_EMPLOYEE)
+
+        company_user.save()
+
+        return {'status': True}
+
+    def remove_company_user(self, company_id, user_id):
+
+        try:
+            user = User.objects.get(pk=user_id)
+        except ObjectDoesNotExist:
+            user = None
+
+        if not isinstance(user, User):
+            raise TypeError('User is not found.')
+
+        try:
+            company = Company.objects.get(pk=company_id)
+        except ObjectDoesNotExist:
+            company = None
+
+        if not isinstance(company, Company):
+            raise TypeError('Company is not found.')
+
+        try:
+            company_user = CompanyUser.objects.get(company=company, user=user)
+        except ObjectDoesNotExist:
+            company_user = None
+
+        if not isinstance(company_user, CompanyUser):
+            raise TypeError('User is not assigned to this company.')
+
+        company_user.delete()
+
+        return {'status': True}
+
+
 class Company(models.Model):
     title = models.CharField(max_length=255, null=False, blank=False, db_index=True, unique=True)
     website = models.CharField(max_length=255, null=False, blank=False, db_index=True, unique=True)
@@ -59,6 +124,8 @@ class CompanyUser(models.Model):
     status = models.CharField(max_length=255, null=False, blank=False)
 
     REQUIRED_FIELDS = ['user', 'company', 'status']
+
+    objects = CompanyUserManager()
 
     class Meta:
         unique_together = (('user', 'company'),)

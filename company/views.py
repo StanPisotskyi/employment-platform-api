@@ -1,7 +1,7 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, renderer_classes, permission_classes
 from rest_framework.renderers import JSONRenderer
-from .serializers import CompanySerializer
+from .serializers import CompanySerializer, CompanyUserSerializer
 from rest_framework.parsers import JSONParser
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -49,4 +49,19 @@ def get_list_by_search(request, search):
 @renderer_classes([JSONRenderer])
 @permission_classes([IsCompanyUser])
 def add_company_user(request):
-    return Response({'status': True}, status=status.HTTP_201_CREATED)
+    data = JSONParser().parse(request)
+    serializer = CompanyUserSerializer(data=data)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@api_view(['DELETE'])
+@renderer_classes([JSONRenderer])
+@permission_classes([IsCompanyUser])
+def remove_company_user(request):
+    data = JSONParser().parse(request)
+    serializer = CompanyUserSerializer()
+
+    return Response(serializer.remove(data), status=status.HTTP_204_NO_CONTENT)

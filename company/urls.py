@@ -5,5 +5,6 @@ urlpatterns = [
     path('', views.create),
     path('/<int:id>', views.get_one_by_id),
     path('/<str:search>/search', views.get_list_by_search),
-    path('/add-company-user', views.add_company_user)
+    path('/add-company-user', views.add_company_user),
+    path('/remove-company-user', views.remove_company_user)
 ]
