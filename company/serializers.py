@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Company, CompanyUser
+from account.serializers import UserSerializer
 
 
 class CompanySerializer(serializers.ModelSerializer):
@@ -33,3 +34,12 @@ class CompanyUserSerializer(serializers.ModelSerializer):
 
     def remove(self, validated_data):
         return CompanyUser.objects.remove_company_user(**validated_data)
+
+
+class CompanyUsersSerializer(serializers.ModelSerializer):
+    status = serializers.CharField(read_only=True, max_length=255)
+    user = UserSerializer(read_only=True)
+
+    class Meta:
+        model = CompanyUser
+        fields = ['status', 'user']

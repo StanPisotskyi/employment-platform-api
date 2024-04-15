@@ -1,11 +1,11 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, renderer_classes, permission_classes
 from rest_framework.renderers import JSONRenderer
-from .serializers import CompanySerializer, CompanyUserSerializer
+from .serializers import CompanySerializer, CompanyUserSerializer, CompanyUsersSerializer
 from rest_framework.parsers import JSONParser
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from .models import Company
+from .models import Company, CompanyUser
 from .permissions import IsCompanyUser
 
 
@@ -65,3 +65,15 @@ def remove_company_user(request):
     serializer = CompanyUserSerializer()
 
     return Response(serializer.remove(data), status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['GET'])
+@renderer_classes([JSONRenderer])
+@permission_classes([IsAuthenticated])
+def get_company_users(request, id):
+    company = Company.objects.get(pk=id)
+    company_users = CompanyUser.objects.filter(company=company).select_related('user')
+
+    serializer = CompanyUsersSerializer(company_users, many=True)
+
+    return Response(serializer.data, status=status.HTTP_200_OK)
