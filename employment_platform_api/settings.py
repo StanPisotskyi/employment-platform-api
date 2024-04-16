@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'api_auth',
     'account',
     'experience',
-    'company'
+    'company',
+    'user'
 ]
 
 MIDDLEWARE = [
