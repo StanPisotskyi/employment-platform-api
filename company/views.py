@@ -6,7 +6,7 @@ from rest_framework.parsers import JSONParser
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from .models import Company, CompanyUser
-from .permissions import IsCompanyUser
+from .permissions import IsCompanyUser, IsAllowedToWorkWithCompanyData
 
 
 @api_view(['POST'])
@@ -23,8 +23,8 @@ def create(request):
 
 @api_view(['GET'])
 @renderer_classes([JSONRenderer])
-@permission_classes([IsAuthenticated])
-def get_one_by_id(request, id):
+@permission_classes([IsAllowedToWorkWithCompanyData])
+def handle_one_by_id(request, id):
     company = Company.objects.get(pk=id)
     serializer = CompanySerializer(company)
 
@@ -69,7 +69,7 @@ def remove_company_user(request):
 
 @api_view(['GET'])
 @renderer_classes([JSONRenderer])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsCompanyUser])
 def get_company_users(request, id):
     company = Company.objects.get(pk=id)
     company_users = CompanyUser.objects.filter(company=company).select_related('user')
