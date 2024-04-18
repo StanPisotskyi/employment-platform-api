@@ -21,14 +21,26 @@ def create(request):
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-@api_view(['GET'])
+@api_view(['GET', 'PUT', 'DELETE'])
 @renderer_classes([JSONRenderer])
 @permission_classes([IsAllowedToWorkWithCompanyData])
 def handle_one_by_id(request, id):
     company = Company.objects.get(pk=id)
-    serializer = CompanySerializer(company)
 
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    if request.method == 'GET':
+        serializer = CompanySerializer(company)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    elif request.method == 'PUT':
+        serializer = CompanySerializer(company, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'DELETE':
+        company.delete()
+        return Response({'status': True}, status=status.HTTP_204_NO_CONTENT)
+    else:
+        return Response({'status': False}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 @api_view(['GET'])

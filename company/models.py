@@ -38,6 +38,41 @@ class CompanyManager(models.Manager):
 
         return company
 
+    def update_company(self, title, website, about, establish_year, company):
+        if title is None:
+            raise TypeError('Company must have a title.')
+        if website is None:
+            raise TypeError('Company must have a website.')
+        if about is None:
+            raise TypeError('Company must have an about.')
+        if establish_year is None:
+            raise TypeError('Company must have an establish_year.')
+        if not validators.url(website):
+            raise TypeError('Invalid website value.')
+
+        url = re.compile(r"https?://(www\.)?")
+        prepared_url = url.sub('', website).strip().strip('/')
+
+        exists_with_title = False
+        exists_with_website = False
+
+        if title != company.title:
+            exists_with_title = Company.objects.filter(title=title).exists()
+
+        if prepared_url != company.website:
+            exists_with_website = Company.objects.filter(website=prepared_url).exists()
+
+        if exists_with_title or exists_with_website:
+            raise TypeError('Company with that title and/or website already exists.')
+
+        company.title = title
+        company.website = prepared_url
+        company.about = about
+        company.establish_year = establish_year
+        company.save()
+
+        return company
+
 
 class CompanyUserManager(models.Manager):
     def add_company_user(self, company_id, user_id):

@@ -19,6 +19,10 @@ class CompanySerializer(serializers.ModelSerializer):
         validated_data['user'] = self.context['request'].user
         return Company.objects.create_company(**validated_data)
 
+    def update(self, instance, validated_data):
+        validated_data['company'] = instance
+        del validated_data['user']
+        return Company.objects.update_company(**validated_data)
 
 class CompanyUserSerializer(serializers.ModelSerializer):
     status = serializers.BooleanField(read_only=True)
