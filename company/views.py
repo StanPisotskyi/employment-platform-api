@@ -9,16 +9,32 @@ from .models import Company, CompanyUser
 from .permissions import IsCompanyUser, IsAllowedToWorkWithCompanyData
 
 
-@api_view(['POST'])
+@api_view(['GET', 'POST'])
 @renderer_classes([JSONRenderer])
 @permission_classes([IsAuthenticated])
-def create(request):
-    data = JSONParser().parse(request)
-    serializer = CompanySerializer(data=data, context={'request': request})
-    serializer.is_valid(raise_exception=True)
-    serializer.save()
+def list_and_create(request):
+    if request.method == 'GET':
+        search = request.GET.get('search', '')
+        companies = None
 
-    return Response(serializer.data, status=status.HTTP_201_CREATED)
+        if search != '':
+            try:
+                companies = Company.objects.filter(title__istartswith=search).order_by('title')
+            except Company.DoesNotExist:
+                companies = None
+
+        serializer = CompanySerializer(companies, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    elif request.method == 'POST':
+        data = JSONParser().parse(request)
+        serializer = CompanySerializer(data=data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    else:
+        return Response({'status': False}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
@@ -43,40 +59,24 @@ def handle_one_by_id(request, id):
         return Response({'status': False}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-@api_view(['GET'])
-@renderer_classes([JSONRenderer])
-@permission_classes([IsAuthenticated])
-def get_list_by_search(request, search):
-    try:
-        companies = Company.objects.filter(title__istartswith=search).order_by('title')
-    except Company.DoesNotExist:
-        companies = None
-
-    serializer = CompanySerializer(companies, many=True)
-
-    return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-@api_view(['POST'])
+@api_view(['POST', 'DELETE'])
 @renderer_classes([JSONRenderer])
 @permission_classes([IsCompanyUser])
-def add_company_user(request):
-    data = JSONParser().parse(request)
-    serializer = CompanyUserSerializer(data=data)
-    serializer.is_valid(raise_exception=True)
-    serializer.save()
+def handle_company_user(request):
+    if request.method == 'POST':
+        data = JSONParser().parse(request)
+        serializer = CompanyUserSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
 
-    return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    elif request.method == 'DELETE':
+        data = JSONParser().parse(request)
+        serializer = CompanyUserSerializer()
 
-
-@api_view(['DELETE'])
-@renderer_classes([JSONRenderer])
-@permission_classes([IsCompanyUser])
-def remove_company_user(request):
-    data = JSONParser().parse(request)
-    serializer = CompanyUserSerializer()
-
-    return Response(serializer.remove(data), status=status.HTTP_204_NO_CONTENT)
+        return Response(serializer.remove(data), status=status.HTTP_204_NO_CONTENT)
+    else:
+        return Response({'status': False}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 @api_view(['GET'])

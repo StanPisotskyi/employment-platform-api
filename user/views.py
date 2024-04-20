@@ -12,20 +12,24 @@ from django.db.models import F, Value, CharField
 @api_view(['GET'])
 @renderer_classes([JSONRenderer])
 @permission_classes([IsAuthenticated])
-def get_list_by_search(request, search):
-    try:
-        users = (User
-                 .objects
-                 .annotate(
-            full_name=Concat(
-                F('first_name'),
-                Value(' '),
-                F('last_name'),
-                output_field=CharField()
-            )
-        ).filter(full_name__icontains=search).order_by('full_name'))
-    except User.DoesNotExist:
-        users = None
+def get_list_by_search(request):
+    search = request.GET.get('search', '')
+    users = None
+
+    if search != '':
+        try:
+            users = (User
+                     .objects
+                     .annotate(
+                full_name=Concat(
+                    F('first_name'),
+                    Value(' '),
+                    F('last_name'),
+                    output_field=CharField()
+                )
+            ).filter(full_name__icontains=search).order_by('full_name'))
+        except User.DoesNotExist:
+            users = None
 
     serializer = UserSerializer(users, many=True)
 
