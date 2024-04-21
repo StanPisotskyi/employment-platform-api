@@ -1,9 +1,26 @@
 from django.db import models
 from api_auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 
 
 class SkillManager(models.Manager):
-    pass
+    def create(self, title):
+        if title is None:
+            raise TypeError('Skill must have a title.')
+
+        try:
+            existed_skill = Skill.objects.get(title=title)
+        except ObjectDoesNotExist:
+            existed_skill = None
+
+        if isinstance(existed_skill, Skill):
+            raise TypeError('Skill already exists.')
+
+        skill = Skill(title=title)
+
+        skill.save()
+
+        return skill
 
 
 class UserSkillManager(models.Manager):
