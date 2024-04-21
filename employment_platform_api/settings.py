@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     'account',
     'experience',
     'company',
-    'user'
+    'user',
+    'skill'
 ]
 
 MIDDLEWARE = [
