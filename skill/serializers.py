@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Skill
+from .models import Skill, SkillEvaluation
+from django.core.exceptions import ObjectDoesNotExist
 
 
 class SkillSerializer(serializers.ModelSerializer):
@@ -17,7 +18,20 @@ class SkillSerializer(serializers.ModelSerializer):
 class UserSkillSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     skill = SkillSerializer(read_only=True)
+    is_voted = serializers.SerializerMethodField()
+    votes = serializers.SerializerMethodField()
+
+    def get_is_voted(self, obj):
+        try:
+            skill_evaluation = SkillEvaluation.objects.get(link=obj, user=self.context['request'].user)
+        except ObjectDoesNotExist:
+            skill_evaluation = None
+
+        return bool(isinstance(skill_evaluation, SkillEvaluation))
+
+    def get_votes(self, obj):
+        return SkillEvaluation.objects.filter(link=obj).count()
 
     class Meta:
         model = Skill
-        fields = ['id', 'skill',]
+        fields = ['id', 'skill', 'is_voted', 'votes',]
