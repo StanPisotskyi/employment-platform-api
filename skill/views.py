@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import JSONParser
 from rest_framework import status
 from .serializers import SkillSerializer, UserSkillSerializer
-from .models import Skill, UserSkill
+from .models import Skill, UserSkill, SkillEvaluation
 from django.core.exceptions import ObjectDoesNotExist
 from api_auth.models import User
 
@@ -91,3 +91,38 @@ def list_by_user(request, user_id):
     serializer = UserSkillSerializer(user_skills, many=True, context={'request': request})
 
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST', 'DELETE'])
+@renderer_classes([JSONRenderer])
+@permission_classes([IsAuthenticated])
+def evaluate(request, link_id):
+    try:
+        user_skill = UserSkill.objects.get(pk=link_id)
+    except ObjectDoesNotExist:
+        user_skill = None
+
+    if not isinstance(user_skill, UserSkill):
+        raise TypeError('UserSkill is not found.')
+
+    try:
+        existed_skill_evaluation = SkillEvaluation.objects.get(user=request.user, link=user_skill)
+    except ObjectDoesNotExist:
+        existed_skill_evaluation = None
+
+    if request.method == 'POST':
+        if isinstance(existed_skill_evaluation, UserSkill):
+            raise TypeError('SkillEvaluation already exists.')
+
+        skill_evaluation = SkillEvaluation(link=user_skill, user=request.user)
+        skill_evaluation.save()
+
+        return Response({'status': True}, status=status.HTTP_201_CREATED)
+    elif request.method == 'DELETE':
+        if not isinstance(existed_skill_evaluation, SkillEvaluation):
+            raise TypeError('SkillEvaluation is not found.')
+
+        existed_skill_evaluation.delete()
+        return Response({'status': True}, status=status.HTTP_204_NO_CONTENT)
+    else:
+        return Response({'status': False}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
