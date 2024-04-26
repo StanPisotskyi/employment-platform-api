@@ -7,6 +7,7 @@ from api_auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from .models import Contact, STATUS_WAITING, STATUS_CONFIRMED
 from .serializers import ContactSerializer
+from django.db.models import Q
 
 
 @api_view(['POST'])
@@ -77,4 +78,26 @@ def confirm(request, initiator_id):
     existed_contact.save()
 
     serializer = ContactSerializer(existed_contact)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@renderer_classes([JSONRenderer])
+@permission_classes([IsAuthenticated])
+def list_of_confirmed_contacts(request, user_id):
+    try:
+        user = User.objects.get(pk=user_id)
+    except ObjectDoesNotExist:
+        user = None
+
+    if not isinstance(user, User):
+        raise TypeError('User is not found.')
+
+    try:
+        contacts = Contact.objects.filter((Q(initiator=user) | Q(target=user)), status=STATUS_CONFIRMED).order_by('-id')
+    except Contact.DoesNotExist:
+        contacts = None
+
+    serializer = ContactSerializer(contacts, many=True)
+
     return Response(serializer.data, status=status.HTTP_200_OK)
