@@ -3,7 +3,7 @@ from api_auth.models import User
 
 STATUS_WAITING = 'waiting'
 STATUS_CONFIRMED = 'confirmed'
-STATUS_CANCELED = 'canceled'
+STATUS_BANNED = 'banned'
 
 
 class ContactManager(models.Manager):

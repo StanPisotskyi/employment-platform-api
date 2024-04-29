@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from api_auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
-from .models import Contact, STATUS_WAITING, STATUS_CONFIRMED
+from .models import Contact, STATUS_WAITING, STATUS_CONFIRMED, STATUS_BANNED
 from .serializers import ContactSerializer
 from django.db.models import Q
 
@@ -101,3 +101,57 @@ def list_of_confirmed_contacts(request, user_id):
     serializer = ContactSerializer(contacts, many=True)
 
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['PUT'])
+@renderer_classes([JSONRenderer])
+@permission_classes([IsAuthenticated])
+def ban(request, user_id):
+    try:
+        user = User.objects.get(pk=user_id)
+    except ObjectDoesNotExist:
+        user = None
+
+    if not isinstance(user, User):
+        raise TypeError('User is not found.')
+
+    try:
+        contact = Contact.objects.get((Q(initiator=user) & Q(target=request.user)) |
+                                      (Q(initiator=request.user) & Q(target=user)))
+    except ObjectDoesNotExist:
+        contact = None
+
+    if not isinstance(contact, Contact):
+        raise TypeError('Contact to confirm is not found.')
+
+    contact.status = STATUS_BANNED
+    contact.save()
+
+    serializer = ContactSerializer(contact)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['DELETE'])
+@renderer_classes([JSONRenderer])
+@permission_classes([IsAuthenticated])
+def remove(request, user_id):
+    try:
+        user = User.objects.get(pk=user_id)
+    except ObjectDoesNotExist:
+        user = None
+
+    if not isinstance(user, User):
+        raise TypeError('User is not found.')
+
+    try:
+        contact = Contact.objects.get(((Q(initiator=user) & Q(target=request.user)) |
+                                      (Q(initiator=request.user) & Q(target=user))), status=STATUS_CONFIRMED)
+    except ObjectDoesNotExist:
+        contact = None
+
+    if not isinstance(contact, Contact):
+        raise TypeError('Contact to confirm is not found.')
+
+    contact.delete()
+
+    return Response({'status': True}, status=status.HTTP_204_NO_CONTENT)
