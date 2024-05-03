@@ -1,10 +1,48 @@
 from django.db import models
 from api_auth.models import User
 from django.utils.timezone import now
+from django.core.exceptions import ObjectDoesNotExist
 
 
 class ChatManager(models.Manager):
-    pass
+    def create(self, target_id, user):
+        if target_id is None:
+            raise TypeError('Chat must have a target user.')
+
+        try:
+            target = User.objects.get(pk=target_id)
+        except ObjectDoesNotExist:
+            target = None
+
+        if not isinstance(target, User):
+            raise TypeError('Target user is not found.')
+
+        if target.id == user.id:
+            raise TypeError('Target and logged-in user is the same person.')
+
+        user_chats_ids = []
+        user_chats = ChatUser.objects.filter(user=user).select_related('chat')
+
+        for user_chat in user_chats:
+            user_chats_ids.append(user_chat.chat.id)
+
+        try:
+            existed_link = ChatUser.objects.get(user=target, chat_id__in=user_chats_ids)
+        except ObjectDoesNotExist:
+            existed_link = None
+
+        if isinstance(existed_link, ChatUser):
+            raise TypeError('Chat is already created.')
+
+        chat = Chat()
+        chat_user = ChatUser(chat=chat, user=user)
+        chat_target = ChatUser(chat=chat, user=target)
+
+        chat.save()
+        chat_user.save()
+        chat_target.save()
+
+        return chat
 
 
 class ChatUserManager(models.Manager):

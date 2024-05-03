@@ -5,11 +5,16 @@ from .models import Chat, Message
 
 class ChatSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
-    created_at = serializers.DateField(format="%Y-%m-%d", read_only=True)
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
+    target_id = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = Chat
-        fields = ['id', 'created_at',]
+        fields = ['id', 'created_at', 'target_id',]
+
+    def create(self, validated_data):
+        validated_data['user'] = self.context['request'].user
+        return Chat.objects.create(**validated_data)
 
 
 class MessageSerializer(serializers.ModelSerializer):
