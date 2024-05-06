@@ -17,6 +17,20 @@ class ChatSerializer(serializers.ModelSerializer):
         return Chat.objects.create(**validated_data)
 
 
+class ChatGetSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
+    title = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = Chat
+        fields = ['id', 'created_at', 'title',]
+
+    def create(self, validated_data):
+        validated_data['user'] = self.context['request'].user
+        return Chat.objects.create(**validated_data)
+
+
 class MessageSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     created_at = serializers.DateField(format="%Y-%m-%d", read_only=True)
