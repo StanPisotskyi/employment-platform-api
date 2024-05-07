@@ -155,3 +155,17 @@ def remove(request, user_id):
     contact.delete()
 
     return Response({'status': True}, status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['GET'])
+@renderer_classes([JSONRenderer])
+@permission_classes([IsAuthenticated])
+def list_of_recommended_contacts(request):
+    try:
+        contacts = Contact.objects.raw('SELECT c1.id, c1.initiator_id, c1.target_id FROM contact_contact c1 WHERE c1.initiator_id <> %s AND c1.target_id <> %s AND c1.status = %s', [request.user.id, request.user.id, STATUS_CONFIRMED])
+    except ObjectDoesNotExist:
+        contacts = None
+
+    serializer = ContactSerializer(contacts, many=True)
+
+    return Response(serializer.data, status=status.HTTP_200_OK)
