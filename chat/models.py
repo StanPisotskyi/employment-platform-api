@@ -49,6 +49,17 @@ class ChatUserManager(models.Manager):
     pass
 
 
+class MessageManager(models.Manager):
+    def create(self, chat, author, text):
+        if text is None:
+            raise TypeError('Message must have a text.')
+
+        message = Message(author=author, chat=chat, text=text, is_read=False)
+        message.save()
+
+        return message
+
+
 class Chat(models.Model):
     created_at = models.DateTimeField(null=False, blank=False, default=now)
 
@@ -81,7 +92,7 @@ class Message(models.Model):
 
     REQUIRED_FIELDS = ['author', 'chat', 'created_at', 'text', 'is_read']
 
-    objects = ChatUserManager()
+    objects = MessageManager()
 
     def __str__(self):
         return self.id

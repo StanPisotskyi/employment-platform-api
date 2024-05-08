@@ -162,7 +162,7 @@ def remove(request, user_id):
 @permission_classes([IsAuthenticated])
 def list_of_recommended_contacts(request):
     try:
-        contacts = Contact.objects.raw('SELECT c1.id, c1.initiator_id, c1.target_id FROM contact_contact c1 WHERE c1.initiator_id <> %s AND c1.target_id <> %s AND c1.status = %s', [request.user.id, request.user.id, STATUS_CONFIRMED])
+        contacts = Contact.objects.raw('SELECT c1.id, c1.initiator_id, c1.target_id FROM contact_contact c1 LEFT JOIN contact_contact c2 ON c2.initiator_id = c1.initiator_id LEFT JOIN contact_contact c3 ON c3.target_id = c1.initiator_id LEFT JOIN contact_contact c4 ON c4.initiator_id = c1.target_id LEFT JOIN contact_contact c5 ON c5.target_id = c1.target_id WHERE c1.initiator_id <> %s AND c1.target_id <> %s AND c1.status = %s AND (c2.target_id = %s OR c3.initiator_id =%s OR c4.target_id = %s OR c5.initiator_id = %s) GROUP BY c1.id', [request.user.id, request.user.id, STATUS_CONFIRMED, request.user.id, request.user.id, request.user.id, request.user.id])
     except ObjectDoesNotExist:
         contacts = None
 
